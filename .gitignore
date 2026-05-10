@@ -1,0 +1,18 @@
+# secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# generated data
+data/repos/
+data/cache/
+data/reports/
+.repomind/
+*.sqlite3
+
+# system files
+.DS_Store
