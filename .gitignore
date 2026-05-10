@@ -6,6 +6,7 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+app/tempCodeRunnerFile.py
 
 # generated data
 data/repos/
