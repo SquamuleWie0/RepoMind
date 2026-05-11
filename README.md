@@ -460,13 +460,27 @@ RepoMind 当前支持：
 
 后续计划：
 
-- 增加 keyword search / ripgrep tool
-- 增加 repo tree inspection tool
+### 检索与工具层增强
+
+- 增加 keyword search / ripgrep tool，补充语义检索之外的精确关键词检索能力
+- 增加 repo tree inspection tool，用于查看项目目录结构
 - 增加 file reader tool，实现指定文件精读
 - 将 source citation 扩展到行号级别
-- 增加更丰富的 Eval 指标
+
+### Eval 与可观测性
+
+- 增加更丰富的 Eval 指标，例如 source 命中率、rewrite 触发率、回答稳定性等
+- 在前端展示 Agent trace，方便观察 tool call、grade_documents、rewrite_question 等执行过程
+- 保存每轮问答的 sources、grade 结果和 rewrite 记录，提升可复盘性
+
+### 项目历史与工作台
+
+- 接入 SQLite / SQLAlchemy，实现项目分析历史、AI 导读和对话记录持久化
+- 增加左侧项目历史栏，支持切换已分析仓库并继续追问
+
+### 工程化与部署
+
 - 增加 Docker 支持
-- 在前端展示 Agent trace
 - 增加部署配置
 
 ---
