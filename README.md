@@ -2,7 +2,7 @@
 
 RepoMind 是一个面向 GitHub 开源项目理解场景的 Agentic RAG 系统。
 
-它不是普通聊天机器人，而是一个围绕代码仓库理解场景构建的 Agent 工程项目：用户输入 GitHub 仓库地址后，系统会自动克隆仓库、扫描文件、生成项目导读、构建 Chroma 语义索引，并通过 LangGraph Tool Calling Agent 对项目进行问答。
+与普通聊天机器人不同的，RepoMind是一个围绕代码仓库理解场景构建的 Agent 工程项目：用户输入 GitHub 仓库地址后，系统会自动克隆仓库、扫描文件、生成项目导读、构建 Chroma 语义索引，并通过 LangGraph Tool Calling Agent 对项目进行问答。
 
 当前版本已支持：
 
@@ -40,11 +40,13 @@ RepoMind 的目标是帮助用户快速理解一个陌生 GitHub 项目。
 
 适用场景：
 
-- 快速阅读陌生开源项目
-- 理解项目架构和核心流程
-- 定位具体实现文件
-- 学习 Agent / RAG / FastAPI 等项目结构
-- 作为 Agentic RAG 工程实践项目
+- 快速理解陌生 GitHub 项目
+- 分析项目架构、核心流程和模块关系
+- 定位具体功能的实现文件
+- 基于源码上下文进行可追溯问答
+- 对比不同项目的技术栈和实现方式
+- 辅助技术调研、开源学习、面试准备和二次开发
+- 作为 Agentic RAG / Tool Calling / Eval 的工程实践项目
 
 ---
 
