@@ -1,0 +1,38 @@
+[
+  {
+    "id": "overview_001",
+    "question": "这个项目主要解决什么问题？",
+    "expected_keywords": ["项目", "问题", "功能"],
+    "require_sources": true
+  },
+  {
+    "id": "architecture_001",
+    "question": "这个项目的核心流程是怎么设计的？",
+    "expected_keywords": ["流程", "模块", "调用"],
+    "require_sources": true
+  },
+  {
+    "id": "api_routes_001",
+    "question": "这个项目的 API 路由是怎么设计的？",
+    "expected_keywords": ["API", "路由", "GET", "POST"],
+    "require_sources": true
+  },
+  {
+    "id": "database_001",
+    "question": "这个项目的数据模型和数据库连接分别在哪里实现？",
+    "expected_keywords": ["数据库", "模型", "SQLAlchemy", "SQLite"],
+    "require_sources": true
+  },
+  {
+    "id": "config_001",
+    "question": "这个项目的配置是在哪里读取和使用的？",
+    "expected_keywords": ["配置", "config", "环境"],
+    "require_sources": true
+  },
+  {
+    "id": "ambiguous_001",
+    "question": "它是怎么工作的？",
+    "expected_keywords": ["流程", "工作", "实现"],
+    "require_sources": false
+  }
+]

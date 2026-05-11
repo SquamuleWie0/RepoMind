@@ -47,19 +47,24 @@ INDEX_FILE_NAMES = {
     "pom.xml",
 }
 
+_embedding_model = None
+
 
 def get_embedding_model():
     """
     本地 embedding 模型。
-    不需要 OpenAI Key，适合本地开发和学习 RAG 流程。
-    第一次运行会下载模型。
+    使用全局缓存，避免每次检索都重新加载模型权重。
     """
-    return HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2",
-        model_kwargs={"device": "cpu"},
-        encode_kwargs={"normalize_embeddings": True},
-    )
+    global _embedding_model
 
+    if _embedding_model is None:
+        _embedding_model = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2",
+            model_kwargs={"device": "cpu"},
+            encode_kwargs={"normalize_embeddings": True},
+        )
+
+    return _embedding_model
 
 def should_index_file(file_path: Path) -> bool:
     if set(file_path.parts) & IGNORE_DIRS:
@@ -199,6 +204,69 @@ def search_chroma(
         )
 
     return "\n\n".join(sections)
+
+def search_chroma_with_sources(
+    repo_path: str | Path,
+    query: str,
+    top_k: int = 6,
+) -> dict:
+    """
+    根据用户问题进行语义检索，返回结构化检索结果：
+    - context: 给 LLM 使用的上下文文本
+    - sources: 去重后的来源文件列表
+    - chunks: 每个检索片段的结构化信息
+    """
+    vector_store = load_chroma_index(repo_path)
+
+    docs = vector_store.similarity_search(
+        query=query,
+        k=top_k,
+    )
+
+    if not docs:
+        return {
+            "context": "没有找到相关语义片段。",
+            "sources": [],
+            "chunks": [],
+        }
+
+    chunks = []
+    sources = []
+
+    for index, doc in enumerate(docs, start=1):
+        source = (
+            doc.metadata.get("source")
+            or doc.metadata.get("path")
+            or "unknown"
+        )
+
+        content = doc.page_content.strip()
+
+        chunks.append(
+            {
+                "index": index,
+                "source": source,
+                "content": content,
+            }
+        )
+
+        if source not in sources:
+            sources.append(source)
+
+    context_parts = []
+
+    for chunk in chunks:
+        context_parts.append(
+            f"## 片段 {chunk['index']}\n"
+            f"来源文件：{chunk['source']}\n\n"
+            f"```text\n{chunk['content']}\n```"
+        )
+
+    return {
+        "context": "\n\n".join(context_parts),
+        "sources": sources,
+        "chunks": chunks,
+    }
 
 
 def test_chroma(repo_path: str):
