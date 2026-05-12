@@ -17,3 +17,6 @@ data/reports/
 
 # system files
 .DS_Storeapp/repomind.db
+.DS_Store
+app/repomind.db
+data/
