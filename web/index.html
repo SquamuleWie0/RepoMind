@@ -10,11 +10,89 @@
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      max-width: 980px;
-      margin: 32px auto;
-      padding: 0 20px;
+      margin: 0;
+      padding: 0;
       background: #f7f7f8;
       color: #222;
+    }
+
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 280px;
+      background: #111;
+      color: white;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .sidebar-title {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .sidebar-subtitle {
+      font-size: 13px;
+      color: #aaa;
+      margin-bottom: 18px;
+    }
+
+    .new-project-btn {
+      width: 100%;
+      background: white;
+      color: #111;
+      margin-bottom: 18px;
+      font-weight: 700;
+    }
+
+    .project-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .project-item {
+      padding: 12px;
+      border-radius: 10px;
+      background: #222;
+      cursor: pointer;
+      font-size: 14px;
+      border: 1px solid transparent;
+    }
+
+    .project-item:hover {
+      background: #2d2d2d;
+    }
+
+    .project-item.active {
+      background: #333;
+      border-color: #777;
+    }
+
+    .project-name {
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .project-url {
+      color: #aaa;
+      font-size: 12px;
+      word-break: break-all;
+      line-height: 1.4;
+    }
+
+    .main {
+      flex: 1;
+      max-width: 980px;
+      margin: 32px auto;
+      padding: 0 24px;
+      box-sizing: border-box;
     }
 
     h1 {
@@ -27,7 +105,28 @@
 
     .subtitle {
       color: #666;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      background: #e9e9ec;
+      color: #222;
+      font-weight: 700;
+    }
+
+    .tab-btn.active {
+      background: #111;
+      color: white;
+    }
+
+    .panel.hidden {
+      display: none;
     }
 
     .card {
@@ -138,7 +237,7 @@
       border: 1px solid #eee;
       border-radius: 10px;
       padding: 18px;
-      max-height: 520px;
+      max-height: 620px;
       overflow-y: auto;
     }
 
@@ -158,7 +257,7 @@
     }
 
     .chat-window {
-      height: 520px;
+      height: 620px;
       overflow-y: auto;
       padding: 20px;
       background: #fafafa;
@@ -167,7 +266,7 @@
     .empty-chat {
       color: #888;
       text-align: center;
-      margin-top: 180px;
+      margin-top: 220px;
     }
 
     .message {
@@ -229,43 +328,99 @@
       height: 44px;
       white-space: nowrap;
     }
+
+    @media (max-width: 900px) {
+      .layout {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        max-height: 260px;
+      }
+
+      .main {
+        margin: 20px auto;
+      }
+    }
   </style>
 </head>
+
 <body>
-  <h1>RepoMind</h1>
-  <div class="subtitle">GitHub 开源项目理解与问答助手</div>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-title">RepoMind</div>
+      <div class="sidebar-subtitle">GitHub 项目学习工作台</div>
 
-  <div class="card">
-    <h2>1. 分析 GitHub 项目</h2>
-    <input id="repoUrl" placeholder="输入 GitHub URL，例如：https://github.com/mco-org/squad" />
-    <button id="analyzeBtn" onclick="analyzeRepo()">分析项目</button>
-    <div id="analyzeStatus" class="status"></div>
-  </div>
+      <button class="new-project-btn" onclick="clearCurrentProject()">+ 新项目</button>
 
-  <div class="card">
-    <h2>项目导读</h2>
-    <div id="reportOutput" class="markdown-body">分析完成后，这里会显示 AI 项目导读。</div>
-  </div>
-
-  <div class="card chat-card">
-    <div class="chat-header">
-      <h2>2. 围绕项目对话</h2>
-      <div id="askStatus" class="status">分析项目后即可开始提问。</div>
-    </div>
-
-    <div id="chatWindow" class="chat-window">
-      <div class="empty-chat">这里会显示你和 RepoMind 的连续对话。</div>
-    </div>
-
-    <div class="chat-input-area">
-      <div class="chat-input-row">
-        <textarea id="question" rows="2" placeholder="例如：这个项目的任务是怎么存储的？"></textarea>
-        <button id="askBtn" onclick="askQuestion()">发送</button>
+      <div id="projectList" class="project-list">
+        <div style="color:#aaa;font-size:14px;">正在加载历史项目...</div>
       </div>
-    </div>
+    </aside>
+
+    <main class="main">
+      <h1>RepoMind</h1>
+      <div class="subtitle">GitHub 开源项目理解与问答助手</div>
+
+      <div class="card">
+        <h2>1. 分析 GitHub 项目</h2>
+        <input id="repoUrl" placeholder="输入 GitHub URL，例如：https://github.com/BaseMax/SimpleFastPyAPI" />
+        <button id="analyzeBtn" onclick="analyzeRepo()">分析项目</button>
+        <div id="analyzeStatus" class="status"></div>
+      </div>
+
+      <div class="tabs">
+        <button id="reportTab" class="tab-btn active" onclick="setActivePanel('report')">
+          项目导读
+        </button>
+        <button id="chatTab" class="tab-btn" onclick="setActivePanel('chat')">
+          项目对话
+        </button>
+      </div>
+
+      <section id="reportPanel" class="panel">
+        <div class="card">
+          <h2>项目导读</h2>
+          <div id="reportOutput" class="markdown-body">分析完成后，这里会显示 AI 项目导读。</div>
+        </div>
+      </section>
+
+      <section id="chatPanel" class="panel hidden">
+        <div class="card chat-card">
+          <div class="chat-header">
+            <h2>2. 围绕项目对话</h2>
+            <div id="askStatus" class="status">分析项目后即可开始提问。</div>
+          </div>
+
+          <div id="chatWindow" class="chat-window">
+            <div class="empty-chat">这里会显示你和 RepoMind 的连续对话。</div>
+          </div>
+
+          <div class="chat-input-area">
+            <div class="chat-input-row">
+              <textarea id="question" rows="2" placeholder="例如：这个项目的 API 路由是怎么设计的？"></textarea>
+              <button id="askBtn" onclick="askQuestion()">发送</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
   </div>
 
   <script>
+    let currentProjectId = null;
+
+    async function readResponseJson(response) {
+      const text = await response.text();
+
+      try {
+        return JSON.parse(text);
+      } catch (error) {
+        throw new Error(text || `请求失败，状态码：${response.status}`);
+      }
+    }
+
     function renderMarkdown(text) {
       const html = marked.parse(text || "");
       return DOMPurify.sanitize(html);
@@ -278,6 +433,26 @@
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
+    }
+
+    function setActivePanel(panelName) {
+      const reportPanel = document.getElementById("reportPanel");
+      const chatPanel = document.getElementById("chatPanel");
+      const reportTab = document.getElementById("reportTab");
+      const chatTab = document.getElementById("chatTab");
+
+      if (panelName === "report") {
+        reportPanel.classList.remove("hidden");
+        chatPanel.classList.add("hidden");
+        reportTab.classList.add("active");
+        chatTab.classList.remove("active");
+      } else {
+        reportPanel.classList.add("hidden");
+        chatPanel.classList.remove("hidden");
+        reportTab.classList.remove("active");
+        chatTab.classList.add("active");
+        scrollChatToBottom();
+      }
     }
 
     function scrollChatToBottom() {
@@ -329,6 +504,82 @@
       scrollChatToBottom();
     }
 
+    async function loadProjects() {
+      const projectList = document.getElementById("projectList");
+
+      try {
+        const response = await fetch("/projects");
+        const data = await readResponseJson(response);
+
+        const projects = data.projects || [];
+
+        if (projects.length === 0) {
+          projectList.innerHTML = `<div style="color:#aaa;font-size:14px;">暂无历史项目</div>`;
+          return;
+        }
+
+        projectList.innerHTML = projects.map((project) => `
+          <div class="project-item ${project.id === currentProjectId ? "active" : ""}" onclick="loadProject(${project.id})">
+            <div class="project-name">${escapeHtml(project.project_name || "")}</div>
+            <div class="project-url">${escapeHtml(project.repo_url || "")}</div>
+          </div>
+        `).join("");
+      } catch (error) {
+        projectList.innerHTML = `<div style="color:#aaa;font-size:14px;">历史项目加载失败</div>`;
+      }
+    }
+
+    async function loadProject(projectId) {
+      const reportOutput = document.getElementById("reportOutput");
+      const askStatus = document.getElementById("askStatus");
+      const analyzeStatus = document.getElementById("analyzeStatus");
+
+      try {
+        const projectResponse = await fetch(`/projects/${projectId}`);
+        const project = await readResponseJson(projectResponse);
+
+        if (!projectResponse.ok) {
+          throw new Error(project.detail || "项目加载失败");
+        }
+
+        const messagesResponse = await fetch(`/projects/${projectId}/messages`);
+        const messagesData = await readResponseJson(messagesResponse);
+
+        if (!messagesResponse.ok) {
+          throw new Error(messagesData.detail || "对话加载失败");
+        }
+
+        currentProjectId = projectId;
+
+        document.getElementById("repoUrl").value = project.repo_url || "";
+
+        analyzeStatus.innerText = `已加载历史项目：${project.project_name}`;
+        askStatus.innerText = "已恢复历史项目，可以继续提问。";
+
+        reportOutput.innerHTML = renderMarkdown(project.ai_report || "暂无项目导读。");
+        renderChatHistory(messagesData.messages || []);
+
+        setActivePanel("report");
+        loadProjects();
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    function clearCurrentProject() {
+      currentProjectId = null;
+
+      document.getElementById("repoUrl").value = "";
+      document.getElementById("analyzeStatus").innerText = "";
+      document.getElementById("askStatus").innerText = "分析项目后即可开始提问。";
+      document.getElementById("reportOutput").innerHTML = "分析完成后，这里会显示 AI 项目导读。";
+      document.getElementById("question").value = "";
+
+      renderChatHistory([]);
+      setActivePanel("report");
+      loadProjects();
+    }
+
     async function analyzeRepo() {
       const repoUrl = document.getElementById("repoUrl").value.trim();
       const button = document.getElementById("analyzeBtn");
@@ -346,6 +597,7 @@
       askStatus.innerText = "项目分析中，暂时不能提问。";
       reportOutput.innerHTML = "正在生成项目导读...";
       renderChatHistory([]);
+      setActivePanel("report");
 
       try {
         const response = await fetch("/analyze", {
@@ -356,20 +608,25 @@
           body: JSON.stringify({ repo_url: repoUrl }),
         });
 
-        const data = await response.json();
+        const data = await readResponseJson(response);
 
         if (!response.ok) {
           throw new Error(data.detail || "分析失败");
         }
 
+        currentProjectId = data.project_id;
+
         status.innerText = `分析完成：${data.project_name}`;
         askStatus.innerText = "可以开始围绕这个项目提问。";
-        reportOutput.innerHTML = renderMarkdown(data.ai_report);
-        renderChatHistory(data.chat_history);
+        reportOutput.innerHTML = renderMarkdown(data.ai_report || "");
+        renderChatHistory(data.chat_history || []);
+
+        setActivePanel("report");
+        loadProjects();
       } catch (error) {
-        status.innerText = "分析失败";
-        askStatus.innerText = "请先重新分析项目。";
-        reportOutput.innerText = error.message;
+        status.innerText = `分析失败：${error.message}`;
+        askStatus.innerText = "分析失败，请重新尝试。";
+        reportOutput.innerHTML = "分析失败。";
       } finally {
         button.disabled = false;
       }
@@ -378,22 +635,27 @@
     async function askQuestion() {
       const questionInput = document.getElementById("question");
       const question = questionInput.value.trim();
-      const button = document.getElementById("askBtn");
-      const status = document.getElementById("askStatus");
+      const askButton = document.getElementById("askBtn");
+      const askStatus = document.getElementById("askStatus");
 
       if (!question) {
         alert("请输入问题");
         return;
       }
 
-      button.disabled = true;
-      status.innerText = "正在检索上下文并生成回答...";
+      askButton.disabled = true;
+      askStatus.innerText = "正在回答...";
       questionInput.value = "";
 
+      setActivePanel("chat");
       addTemporaryUserMessage(question);
 
       try {
-        const response = await fetch("/ask-v2", {
+        const askUrl = currentProjectId
+          ? `/projects/${currentProjectId}/ask`
+          : "/ask-v2";
+
+        const response = await fetch(askUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -401,16 +663,22 @@
           body: JSON.stringify({ question }),
         });
 
-        const data = await response.json();
+        const data = await readResponseJson(response);
 
         if (!response.ok) {
           throw new Error(data.detail || "回答失败");
         }
 
-        status.innerText = "回答完成";
-        renderChatHistory(data.chat_history);
+        askStatus.innerText = "回答完成";
+
+        if (data.project_id) {
+          currentProjectId = data.project_id;
+        }
+
+        renderChatHistory(data.chat_history || []);
+        loadProjects();
       } catch (error) {
-        status.innerText = "回答失败：" + error.message;
+        askStatus.innerText = `回答失败：${error.message}`;
 
         const loadingMessage = document.getElementById("loadingMessage");
         if (loadingMessage) {
@@ -419,15 +687,13 @@
           `;
         }
       } finally {
-        button.disabled = false;
+        askButton.disabled = false;
       }
     }
 
-    document.getElementById("question").addEventListener("keydown", function(event) {
-      if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
-        askQuestion();
-      }
+    window.addEventListener("DOMContentLoaded", () => {
+      loadProjects();
+      setActivePanel("report");
     });
   </script>
 </body>

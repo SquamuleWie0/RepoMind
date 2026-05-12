@@ -16,4 +16,4 @@ data/reports/
 *.sqlite3
 
 # system files
-.DS_Store
+.DS_Storeapp/repomind.db

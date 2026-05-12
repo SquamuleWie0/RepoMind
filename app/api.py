@@ -13,6 +13,7 @@ from .report_generator import generate_markdown_report, save_report
 from .memory_manager import create_memory_state, build_memory_context, add_turn
 from .chroma_indexer import build_chroma_index
 from .langgraph_agent import answer_with_langgraph
+from .project_store import save_project, add_message, list_projects, get_project, list_messages
 
 
 CURRENT_DIR = Path(__file__).parent
@@ -32,9 +33,12 @@ class AskRequest(BaseModel):
 
 
 CURRENT_PROJECT = {
+    "project_id": None,
     "repo_path": None,
     "file_tree": "",
+    "ai_report": "",
     "analysis_result": {},
+    
     "memory": create_memory_state(),
 }
 
@@ -88,12 +92,26 @@ def analyze(request: AnalyzeRequest):
 
     build_chroma_index(repo_path)
 
+    project_id = save_project(
+        repo_url=repo_url,
+        project_name=analysis_result["project_name"],
+        tech_stack=analysis_result.get("tech_stack"),
+        repo_path=str(repo_path),
+        file_tree=file_tree,
+        analysis_result=analysis_result,
+        ai_report=ai_report,
+        basic_report=basic_report,
+    )
+
+    CURRENT_PROJECT["project_id"] = project_id
     CURRENT_PROJECT["repo_path"] = repo_path
     CURRENT_PROJECT["file_tree"] = file_tree
     CURRENT_PROJECT["analysis_result"] = analysis_result
+    CURRENT_PROJECT["ai_report"] = ai_report
     CURRENT_PROJECT["memory"] = create_memory_state()
 
     return {
+        "project_id": project_id,
         "project_name": analysis_result["project_name"],
         "project_type": analysis_result.get("project_type"),
         "tech_stack": analysis_result.get("tech_stack"),
@@ -124,6 +142,7 @@ def ask_v2(request: AskRequest):
         question=question,
         file_tree=CURRENT_PROJECT["file_tree"],
         analysis_result=CURRENT_PROJECT["analysis_result"],
+        project_report=CURRENT_PROJECT.get("ai_report", ""),
         memory_context=memory_context,
     )
 
@@ -133,9 +152,46 @@ def ask_v2(request: AskRequest):
         answer=answer,
     )
 
+    project_id = CURRENT_PROJECT.get("project_id")
+
+    if project_id is not None:
+        add_message(
+            project_id=project_id,
+            question=question,
+            answer=answer,
+        )
+
     return {
         "question": question,
         "answer": answer,
         "chat_history": CURRENT_PROJECT["memory"]["recent_turns"],
         "agent_version": "tool-calling-v1",
+    }
+
+@app.get("/projects")
+def get_projects_api():
+    return {
+        "projects": list_projects()
+    }
+
+
+@app.get("/projects/{project_id}")
+def get_project_api(project_id: int):
+    project = get_project(project_id)
+
+    if project is None:
+        raise HTTPException(status_code=404, detail="项目不存在")
+
+    return project
+
+
+@app.get("/projects/{project_id}/messages")
+def get_project_messages_api(project_id: int):
+    project = get_project(project_id)
+
+    if project is None:
+        raise HTTPException(status_code=404, detail="项目不存在")
+
+    return {
+        "messages": list_messages(project_id)
     }

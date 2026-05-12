@@ -21,6 +21,10 @@ class RepoMindState(TypedDict, total=False):
     memory_context: str
     messages: Annotated[list, add_messages]
     sources: list[str]
+    project_report: str
+
+    entry_route: str
+    entry_route_reason: str 
 
     retrieved_context: str
 
@@ -42,6 +46,16 @@ class GradeDocuments(BaseModel):
         description="Brief reason explaining why the context is or is not sufficient."
     )
 
+class EntryRouteDecision(BaseModel):
+    """Decide whether to answer from project report or use normal repo agent."""
+
+    route: Literal["report_answer", "agent"] = Field(
+        description="report_answer if user asks about generated project report; agent for normal repository QA."
+    )
+    reason: str = Field(
+        description="Brief reason for the route decision."
+    )
+
 def make_chroma_search_tool(repo_path: str):
     @tool
     def chroma_search_tool(query: str) -> str:
@@ -56,9 +70,141 @@ def make_chroma_search_tool(repo_path: str):
     
     return chroma_search_tool
 
+def rule_match_project_report_question(question: str) -> bool:
+    normalized = question.lower().replace(" ", "")
+
+    report_keywords = [
+        "项目导读",
+        "ai导读",
+        "项目报告",
+        "ai报告",
+        "分析报告",
+        "导读内容",
+        "报告内容",
+        "刚才的导读",
+        "上面的导读",
+        "上方的导读",
+        "刚才生成的报告",
+        "上面生成的报告",
+        "你刚才生成的报告",
+        "刚才那份报告",
+        "上面那份报告",
+    ]
+
+    return any(keyword in normalized for keyword in report_keywords)
+
+
+def classify_entry_route_with_llm(state: RepoMindState) -> EntryRouteDecision:
+    question = state.get("question", "")
+    project_report = state.get("project_report", "")
+    memory_context = state.get("memory_context", "")
+
+    prompt = f"""
+你是 RepoMind 的入口路由器。
+
+RepoMind 中有三类上下文：
+
+1. project_report：
+/analyze 阶段生成的 AI 项目导读，也就是前端“项目导读”区域展示的报告。
+
+2. memory_context：
+用户和 RepoMind 的历史问答记录。
+
+3. retrieved_context：
+当前问题通过代码检索工具临时检索出来的源码上下文。
+
+你的任务是判断用户当前问题应该走哪条路线。
+
+可选 route：
+- report_answer：用户在询问项目导读、AI 报告、上方报告、刚才生成的导读、项目导读内容、报告为什么这么写等。
+- agent：用户在询问项目代码、实现、函数、文件、架构、流程、API、数据库、配置等，需要正常进入代码仓库 Agent。
+
+用户问题：
+{question}
+
+当前是否存在 project_report：
+{"是" if project_report.strip() else "否"}
+
+对话记忆：
+{memory_context[-2000:]}
+
+判断规则：
+- 如果用户明确提到“项目导读 / 项目报告 / AI 导读 / 上面的报告 / 刚才生成的报告”，route=report_answer。
+- 如果用户问“项目导读内容是什么”“把报告打印给我”“上面报告为什么这么说”，route=report_answer。
+- 如果用户问具体代码、函数、文件、API、数据库、配置、调用链，route=agent。
+- 如果没有 project_report，即使用户问报告，也 route=agent。
+- 不要回答用户问题，只做路由判断。
+
+请只返回 JSON：
+
+{{
+  "route": "report_answer",
+  "reason": "用户询问前端项目导读内容，应直接使用 project_report。"
+}}
+"""
+
+    response = tool_calling_model.invoke(
+        [{"role": "user", "content": prompt}]
+    )
+
+    raw_text = response.content.strip()
+
+    try:
+        data = json.loads(raw_text)
+        return EntryRouteDecision(**data)
+    except Exception:
+        return EntryRouteDecision(
+            route="agent",
+            reason=f"入口路由 JSON 解析失败，回退到 agent。原始输出：{raw_text[:200]}",
+        )
+
+
+def entry_router_node(state: RepoMindState) -> RepoMindState:
+    question = state.get("question", "")
+    project_report = state.get("project_report", "")
+
+    if not project_report.strip():
+        print("[EntryRouter] route: agent")
+        print("[EntryRouter] reason: project_report is empty")
+
+        return {
+            **state,
+            "entry_route": "agent",
+            "entry_route_reason": "project_report 为空，进入普通 Agent 流程。",
+        }
+
+    if rule_match_project_report_question(question):
+        print("[EntryRouter] route: report_answer")
+        print("[EntryRouter] reason: rule matched project report question")
+
+        return {
+            **state,
+            "entry_route": "report_answer",
+            "entry_route_reason": "规则命中项目导读类问题。",
+        }
+
+    decision = classify_entry_route_with_llm(state)
+
+    print("[EntryRouter] route:", decision.route)
+    print("[EntryRouter] reason:", decision.reason)
+
+    return {
+        **state,
+        "entry_route": decision.route,
+        "entry_route_reason": decision.reason,
+    }
+
+
+def decide_entry_route(state: RepoMindState) -> Literal["report_answer", "agent"]:
+    if state.get("entry_route") == "report_answer":
+        return "report_answer"
+
+    return "agent"
+
 def make_agent_node(chroma_tool):
     def agent_node(state: RepoMindState) -> RepoMindState:
         question = state["question"]
+        project_report = state.get("project_report", "")
 
         messages = [
             {
@@ -66,7 +212,9 @@ def make_agent_node(chroma_tool):
                 "content": (
                     "你是 RepoMind，一个代码仓库理解 Agent。"
                     "如果用户问题涉及具体代码、实现、文件、调用关系，请调用 chroma_search_tool 检索项目。"
+                    "如果用户问题是在询问项目导读、项目报告、项目总结、整体介绍，请优先基于【项目导读】回答，不要调用工具。"
                     "如果问题不需要查看代码，可以直接回答。"
+                    f"\n\n【项目导读】\n{project_report}"
                 ),
             },
             {
@@ -242,6 +390,67 @@ def rewrite_question_node(state: RepoMindState) -> RepoMindState:
         "sources": [],
     }
 
+def report_answer_node(state: RepoMindState) -> RepoMindState:
+    question = state["question"]
+    project_report = state.get("project_report", "").strip()
+
+    if not project_report:
+        return {
+            **state,
+            "answer": "当前没有可用的项目导读内容。请先分析一个 GitHub 项目。",
+            "sources": [],
+        }
+
+    normalized = question.lower().replace(" ", "")
+
+    print_keywords = [
+        "打印",
+        "直接给我",
+        "完整",
+        "原文",
+        "内容是什么",
+        "展示",
+        "输出",
+        "给我看看",
+    ]
+
+    should_print_raw_report = any(keyword in normalized for keyword in print_keywords)
+
+    if should_print_raw_report:
+        answer = f"项目导读内容如下：\n\n{project_report}"
+    else:
+        prompt = f"""
+你是 RepoMind，一个 GitHub 项目理解 Agent。
+
+用户正在询问“项目导读 / 项目报告”相关内容。
+在 RepoMind 中，“项目导读”专指 /analyze 阶段生成并展示在前端项目导读区域的 AI 报告，也就是下面的 project_report。
+
+用户问题：
+{question}
+
+project_report：
+{project_report}
+
+回答要求：
+- 只基于 project_report 回答。
+- 不要调用或引用代码检索结果。
+- 不要编造 project_report 中没有的信息。
+- 如果用户问“为什么这么说”，请解释 project_report 中对应表述的依据。
+- 如果用户要求打印报告，就完整输出报告内容。
+- 控制在 150 到 500 字。
+"""
+
+        answer = ask_with_langchain(prompt)
+
+    print("[ReportAnswer] use project_report directly")
+    print("[ReportAnswer] answer length:", len(answer))
+
+    return {
+        **state,
+        "answer": answer.strip(),
+        "sources": [],
+    }
+
 def direct_answer_node(state: RepoMindState) -> RepoMindState:
     messages = state.get("messages", [])
 
@@ -288,6 +497,9 @@ def answer_node(state: RepoMindState) -> RepoMindState:
 项目分析结果：
 {json.dumps(state.get("analysis_result", {}), ensure_ascii=False, indent=2)}
 
+项目导读：
+{state.get("project_report", "")}
+
 检索上下文：
 {state.get("retrieved_context", "")}
 
@@ -315,12 +527,13 @@ def answer_node(state: RepoMindState) -> RepoMindState:
         **state,
         "answer": answer.strip(),
     }
-
 def build_repomind_graph(repo_path: str | Path):
     chroma_tool = make_chroma_search_tool(str(repo_path))
 
     graph = StateGraph(RepoMindState)
 
+    graph.add_node("entry_router", entry_router_node)
+    graph.add_node("report_answer", report_answer_node)
     graph.add_node("agent", make_agent_node(chroma_tool))
     graph.add_node("tools", ToolNode([chroma_tool]))
     graph.add_node("collect_context", collect_tool_context_node)
@@ -329,7 +542,18 @@ def build_repomind_graph(repo_path: str | Path):
     graph.add_node("direct_answer", direct_answer_node)
     graph.add_node("answer", answer_node)
 
-    graph.add_edge(START, "agent")
+    graph.add_edge(START, "entry_router")
+
+    graph.add_conditional_edges(
+        "entry_router",
+        decide_entry_route,
+        {
+            "report_answer": "report_answer",
+            "agent": "agent",
+        },
+    )
+
+    graph.add_edge("report_answer", END)
 
     graph.add_conditional_edges(
         "agent",
@@ -363,6 +587,7 @@ def answer_with_langgraph(
     question: str,
     file_tree: str = "",
     analysis_result: dict | None = None,
+    project_report: str = "",
     memory_context: str = "",
 ) -> str:
     app = build_repomind_graph(repo_path)
@@ -373,6 +598,7 @@ def answer_with_langgraph(
             "question": question,
             "file_tree": file_tree,
             "analysis_result": analysis_result or {},
+            "project_report": project_report,
             "memory_context": memory_context,
             "original_question": question,
             "sources": [],
