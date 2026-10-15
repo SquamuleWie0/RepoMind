@@ -431,6 +431,10 @@ scripts/run_eval.py
 python -m scripts.run_eval
 ```
 
+> 注意：Eval 脚本默认对本地已分析过的仓库 `data/repos/SimpleFastPyAPI` 运行
+> （`data/` 不进版本库）。因此首次运行前，需要先在界面上分析一个仓库，
+> 或修改 `scripts/run_eval.py` 里的 `REPO_PATH` 指向你自己的目标仓库目录。
+
 当前 Eval 检查内容：
 
 - 是否成功返回 answer

@@ -1,17 +1,25 @@
-GitPython
-openai
-python-dotenv
-
+# Web 服务
 fastapi
 uvicorn
 
+# LLM 调用与 Agent 编排
+openai
 langchain
+langchain-core
 langchain-openai
-langgraph
-langchain-chroma
 langchain-community
 langchain-text-splitters
+langgraph
 
+# 向量检索
+langchain-chroma
 chromadb
 sentence-transformers
+
+# 仓库读取与持久化
+GitPython
+sqlalchemy
+
+# 配置
+python-dotenv
 pydantic
