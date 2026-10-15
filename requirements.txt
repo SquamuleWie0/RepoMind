@@ -1,5 +1,17 @@
 GitPython
 openai
 python-dotenv
+
 fastapi
 uvicorn
+
+langchain
+langchain-openai
+langgraph
+langchain-chroma
+langchain-community
+langchain-text-splitters
+
+chromadb
+sentence-transformers
+pydantic

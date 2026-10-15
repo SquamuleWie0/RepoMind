@@ -60,7 +60,7 @@ def add_message(
     project_id: int,
     question: str,
     answer: str,
-) -> None:
+) -> int:
     db = SessionLocal()
 
     try:
@@ -72,6 +72,9 @@ def add_message(
 
         db.add(message)
         db.commit()
+        db.refresh(message)
+
+        return message.id
 
     finally:
         db.close()
@@ -156,6 +159,58 @@ def list_messages(project_id: int) -> list[dict]:
             }
             for message in messages
         ]
+
+    finally:
+        db.close()
+
+
+def delete_project(project_id: int) -> bool:
+    """
+    删除整个项目。
+    由于 Project.messages / draft_note / learning_notes 都配置了 cascade，
+    删除 Project 时会自动删除该项目下的问答、草稿和学习记录。
+    """
+    db = SessionLocal()
+
+    try:
+        project = db.query(Project).filter(Project.id == project_id).first()
+
+        if project is None:
+            return False
+
+        db.delete(project)
+        db.commit()
+
+        return True
+
+    finally:
+        db.close()
+
+
+def delete_message(project_id: int, message_id: int) -> bool:
+    """
+    删除某个项目下的一条问答。
+    同时校验 project_id，避免误删其他项目消息。
+    """
+    db = SessionLocal()
+
+    try:
+        message = (
+            db.query(ProjectMessage)
+            .filter(
+                ProjectMessage.id == message_id,
+                ProjectMessage.project_id == project_id,
+            )
+            .first()
+        )
+
+        if message is None:
+            return False
+
+        db.delete(message)
+        db.commit()
+
+        return True
 
     finally:
         db.close()

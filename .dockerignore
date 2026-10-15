@@ -1,0 +1,16 @@
+.env
+.venv
+venv
+__pycache__
+*.pyc
+.DS_Store
+*.db
+
+.git
+.gitignore
+
+data/repos
+data/cache
+data/reports
+.repomind
+*.sqlite3

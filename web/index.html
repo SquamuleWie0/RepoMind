@@ -8,120 +8,356 @@
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
 
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f7f7f8;
-      color: #222;
+    :root {
+      --bg: #f5f5f4;
+      --surface: #ffffff;
+      --surface-soft: #fafafa;
+      --surface-muted: #f1f1f0;
+      --text: #1f2328;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --border-strong: #d1d5db;
+      --primary: #111827;
+      --primary-hover: #000000;
+      --danger: #dc2626;
+      --danger-soft: #fee2e2;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+      --sidebar-width: 280px;
+      --notes-width: 390px;
+      --notes-collapsed-width: 56px;
     }
 
-    .layout {
-      display: flex;
-      min-height: 100vh;
+    * {
+      box-sizing: border-box;
     }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    button,
+    input,
+    textarea {
+      font-family: inherit;
+    }
+
+    button {
+      border: none;
+      cursor: pointer;
+      transition: 0.16s ease;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) minmax(0, 1fr) var(--notes-width);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .app-shell.notes-collapsed {
+      grid-template-columns: var(--sidebar-width) minmax(0, 1fr) var(--notes-collapsed-width);
+    }
+
+    /* Sidebar */
 
     .sidebar {
-      width: 280px;
-      background: #111;
+      background: #101114;
       color: white;
-      padding: 20px;
-      box-sizing: border-box;
+      padding: 20px 16px;
       overflow-y: auto;
-      flex-shrink: 0;
+      border-right: 1px solid #202227;
     }
 
-    .sidebar-title {
-      font-size: 22px;
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 22px;
+      padding: 0 4px;
+    }
+
+    .brand-logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: white;
+      color: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+    }
+
+    .brand-title {
+      font-size: 20px;
       font-weight: 800;
-      margin-bottom: 8px;
+      line-height: 1.1;
     }
 
-    .sidebar-subtitle {
-      font-size: 13px;
-      color: #aaa;
-      margin-bottom: 18px;
+    .brand-subtitle {
+      font-size: 12px;
+      color: #a1a1aa;
+      margin-top: 3px;
     }
 
     .new-project-btn {
       width: 100%;
+      height: 44px;
+      border-radius: 12px;
       background: white;
       color: #111;
-      margin-bottom: 18px;
       font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .new-project-btn:hover {
+      background: #f4f4f5;
+    }
+
+    .side-section-title {
+      font-size: 12px;
+      color: #8b8d94;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin: 12px 4px 10px;
     }
 
     .project-list {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
 
     .project-item {
-      padding: 12px;
-      border-radius: 10px;
-      background: #222;
-      cursor: pointer;
-      font-size: 14px;
+      position: relative;
+      padding: 12px 38px 12px 12px;
+      border-radius: 12px;
+      background: transparent;
       border: 1px solid transparent;
+      cursor: pointer;
     }
 
     .project-item:hover {
-      background: #2d2d2d;
+      background: #1c1d22;
     }
 
     .project-item.active {
-      background: #333;
-      border-color: #777;
+      background: #25262c;
+      border-color: #3f414b;
     }
 
     .project-name {
+      font-size: 14px;
       font-weight: 700;
-      margin-bottom: 6px;
+      margin-bottom: 5px;
+      color: #f4f4f5;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .project-url {
-      color: #aaa;
       font-size: 12px;
-      word-break: break-all;
+      color: #a1a1aa;
       line-height: 1.4;
+      word-break: break-all;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
+
+    .project-delete-btn {
+      position: absolute;
+      top: 10px;
+      right: 8px;
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: transparent;
+      color: #777;
+      opacity: 0;
+      font-size: 14px;
+    }
+
+    .project-item:hover .project-delete-btn {
+      opacity: 1;
+    }
+
+    .project-delete-btn:hover {
+      background: #3f1f1f;
+      color: #fca5a5;
+    }
+
+    /* Main */
 
     .main {
-      flex: 1;
-      max-width: 980px;
-      margin: 32px auto;
-      padding: 0 24px;
-      box-sizing: border-box;
+      overflow-y: auto;
+      padding: 34px 40px 48px;
     }
 
-    h1 {
-      margin-bottom: 6px;
+    .main-inner {
+      max-width: 920px;
+      margin: 0 auto;
     }
 
-    h2 {
-      margin-top: 0;
-    }
-
-    .subtitle {
-      color: #666;
-      margin-bottom: 20px;
-    }
-
-    .tabs {
+    .topbar {
       display: flex;
-      gap: 10px;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .page-title {
+      font-size: 34px;
+      font-weight: 850;
+      margin: 0 0 8px;
+      letter-spacing: -0.03em;
+    }
+
+    .page-subtitle {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .current-project-badge {
+      padding: 8px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 13px;
+      box-shadow: var(--shadow-sm);
+      white-space: nowrap;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      padding: 22px;
       margin-bottom: 20px;
     }
 
-    .tab-btn {
-      background: #e9e9ec;
-      color: #222;
+    .card-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin: 0 0 16px;
+      letter-spacing: -0.01em;
+    }
+
+    .repo-input-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--border-strong);
+      background: white;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+      outline: none;
+      color: var(--text);
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: #9ca3af;
+      box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    .primary-btn {
+      background: var(--primary);
+      color: white;
+      border-radius: 12px;
+      padding: 11px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .primary-btn:hover {
+      background: var(--primary-hover);
+    }
+
+    .secondary-btn {
+      background: var(--surface-muted);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 14px;
       font-weight: 700;
     }
 
-    .tab-btn.active {
-      background: #111;
+    .secondary-btn:hover {
+      background: #e5e7eb;
+    }
+
+    .ghost-btn {
+      background: transparent;
+      color: var(--muted);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .ghost-btn:hover {
+      background: var(--surface-muted);
+      color: var(--text);
+    }
+
+    .status {
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .main-tabs {
+      display: flex;
+      gap: 8px;
+      margin: 4px 0 18px;
+    }
+
+    .main-tab {
+      padding: 10px 16px;
+      border-radius: 12px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 750;
+      font-size: 14px;
+    }
+
+    .main-tab:hover {
+      background: var(--surface-muted);
+      color: var(--text);
+    }
+
+    .main-tab.active {
+      background: var(--primary);
       color: white;
     }
 
@@ -129,117 +365,15 @@
       display: none;
     }
 
-    .card {
-      background: white;
+    .report-box {
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
       border-radius: 14px;
       padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      min-height: 360px;
     }
 
-    input, textarea {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      font-size: 15px;
-      margin-top: 8px;
-      margin-bottom: 12px;
-      outline: none;
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 64px;
-      max-height: 140px;
-    }
-
-    button {
-      padding: 10px 18px;
-      border: none;
-      border-radius: 10px;
-      background: #111;
-      color: white;
-      font-size: 15px;
-      cursor: pointer;
-    }
-
-    button:disabled {
-      background: #999;
-      cursor: not-allowed;
-    }
-
-    .status {
-      color: #666;
-      margin-top: 8px;
-      font-size: 14px;
-    }
-
-    .markdown-body {
-      line-height: 1.75;
-      font-size: 15px;
-    }
-
-    .markdown-body h1,
-    .markdown-body h2,
-    .markdown-body h3 {
-      margin-top: 18px;
-      margin-bottom: 10px;
-      line-height: 1.4;
-    }
-
-    .markdown-body h1 {
-      font-size: 24px;
-    }
-
-    .markdown-body h2 {
-      font-size: 20px;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 6px;
-    }
-
-    .markdown-body h3 {
-      font-size: 17px;
-    }
-
-    .markdown-body p {
-      margin: 8px 0;
-    }
-
-    .markdown-body ul,
-    .markdown-body ol {
-      padding-left: 24px;
-    }
-
-    .markdown-body code {
-      background: #eee;
-      padding: 2px 5px;
-      border-radius: 4px;
-      font-family: Menlo, Monaco, Consolas, monospace;
-      font-size: 90%;
-    }
-
-    .markdown-body pre {
-      background: #f0f0f0;
-      padding: 14px;
-      border-radius: 8px;
-      overflow-x: auto;
-    }
-
-    .markdown-body pre code {
-      background: transparent;
-      padding: 0;
-    }
-
-    #reportOutput {
-      background: #fafafa;
-      border: 1px solid #eee;
-      border-radius: 10px;
-      padding: 18px;
-      max-height: 620px;
-      overflow-y: auto;
-    }
+    /* Chat */
 
     .chat-card {
       padding: 0;
@@ -247,26 +381,37 @@
     }
 
     .chat-header {
-      padding: 18px 20px;
-      border-bottom: 1px solid #eee;
-      background: #fff;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: white;
     }
 
-    .chat-header h2 {
-      margin: 0;
+    .chat-title {
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .chat-status {
+      font-size: 13px;
+      color: var(--muted);
     }
 
     .chat-window {
-      height: 620px;
+      height: calc(100vh - 360px);
+      min-height: 420px;
       overflow-y: auto;
-      padding: 20px;
-      background: #fafafa;
+      padding: 24px 22px;
+      background: #fbfbfb;
     }
 
     .empty-chat {
-      color: #888;
+      margin-top: 150px;
       text-align: center;
-      margin-top: 220px;
+      color: var(--muted);
+      font-size: 14px;
     }
 
     .message {
@@ -284,32 +429,56 @@
 
     .bubble {
       max-width: 78%;
-      border-radius: 14px;
-      padding: 12px 14px;
-      line-height: 1.65;
-      font-size: 15px;
+      border-radius: 16px;
+      padding: 13px 15px;
+      line-height: 1.7;
+      font-size: 14px;
+      position: relative;
       word-break: break-word;
     }
 
     .user .bubble {
-      background: #111;
+      background: #111827;
       color: white;
-      border-bottom-right-radius: 4px;
+      border-bottom-right-radius: 5px;
     }
 
     .assistant .bubble {
       background: white;
-      border: 1px solid #e6e6e6;
-      border-bottom-left-radius: 4px;
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 5px;
     }
 
-    .assistant .bubble .markdown-body {
+    .assistant-bubble {
+      padding-bottom: 34px;
+    }
+
+    .bubble-delete-btn {
+      position: absolute;
+      right: 8px;
+      bottom: 7px;
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      padding: 0;
       background: transparent;
+      color: #9ca3af;
+      font-size: 13px;
+      opacity: 0;
+    }
+
+    .assistant-bubble:hover .bubble-delete-btn {
+      opacity: 1;
+    }
+
+    .bubble-delete-btn:hover {
+      background: var(--danger-soft);
+      color: var(--danger);
     }
 
     .chat-input-area {
-      padding: 16px 20px 20px;
-      border-top: 1px solid #eee;
+      padding: 16px 18px;
+      border-top: 1px solid var(--border);
       background: white;
     }
 
@@ -320,100 +489,412 @@
     }
 
     .chat-input-row textarea {
+      min-height: 46px;
+      max-height: 140px;
       margin: 0;
+    }
+
+    /* Notes panel */
+
+    .notes-panel {
+      border-left: 1px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: width 0.18s ease;
+    }
+
+    .notes-collapsed .notes-panel {
+      align-items: center;
+      background: #fbfbfb;
+    }
+
+    .notes-header {
+      height: 72px;
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .notes-title {
+      font-size: 16px;
+      font-weight: 850;
+      margin-bottom: 3px;
+    }
+
+    .notes-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .notes-collapse-btn {
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border-radius: 10px;
+      background: var(--surface-muted);
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .notes-collapse-btn:hover {
+      background: #e5e7eb;
+    }
+
+    .notes-collapsed-content {
+      display: none;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+
+    .notes-collapsed .notes-full {
+      display: none;
+    }
+
+    .notes-collapsed .notes-collapsed-content {
+      display: block;
+      cursor: pointer;
+    }
+
+    .note-tabs {
+      display: flex;
+      gap: 8px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .note-tab {
       flex: 1;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--surface-muted);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
     }
 
-    .chat-input-row button {
-      height: 44px;
-      white-space: nowrap;
+    .note-tab:hover {
+      background: #e5e7eb;
+      color: var(--text);
     }
 
-    @media (max-width: 900px) {
-      .layout {
-        flex-direction: column;
+    .note-tab.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .notes-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      background: #fbfbfb;
+    }
+
+    .notes-section.hidden {
+      display: none;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: #374151;
+    }
+
+    #draftContent {
+      min-height: 360px;
+      max-height: 520px;
+      font-family: Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .preview-box {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      min-height: 430px;
+    }
+
+    .notes-footer {
+      padding: 12px 14px;
+      border-top: 1px solid var(--border);
+      background: white;
+      display: flex;
+      gap: 8px;
+    }
+
+    .notes-footer .primary-btn,
+    .notes-footer .secondary-btn {
+      flex: 1;
+      padding: 10px 12px;
+    }
+
+    .learning-toolbar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .learning-toolbar button {
+      flex: 1;
+      padding: 10px 12px;
+    }
+
+    .learning-note-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .learning-note-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .learning-note-title {
+      font-size: 14px;
+      font-weight: 850;
+    }
+
+    .small-icon-btn {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: #9ca3af;
+      font-size: 13px;
+    }
+
+    .small-icon-btn:hover {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .learning-note-content {
+      max-height: 240px;
+      overflow-y: auto;
+      background: var(--surface-soft);
+      border-radius: 12px;
+      padding: 12px;
+      border: 1px solid #f0f0f0;
+    }
+
+    .markdown-body {
+      line-height: 1.75;
+      font-size: 14px;
+    }
+
+    .markdown-body h1 {
+      font-size: 23px;
+    }
+
+    .markdown-body h2 {
+      font-size: 18px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
+    }
+
+    .markdown-body h3 {
+      font-size: 16px;
+    }
+
+    .markdown-body code {
+      background: #eeeeef;
+      border-radius: 5px;
+      padding: 2px 5px;
+      font-family: Menlo, Monaco, Consolas, monospace;
+      font-size: 90%;
+    }
+
+    .markdown-body pre {
+      background: #f3f4f6;
+      border-radius: 10px;
+      padding: 12px;
+      overflow-x: auto;
+    }
+
+    .empty-state {
+      color: var(--muted);
+      font-size: 13px;
+      background: white;
+      border: 1px dashed var(--border-strong);
+      border-radius: 14px;
+      padding: 18px;
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 1180px) {
+      .app-shell {
+        grid-template-columns: 240px minmax(0, 1fr);
       }
 
-      .sidebar {
-        width: 100%;
-        max-height: 260px;
+      .notes-panel {
+        position: fixed;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: var(--notes-width);
+        z-index: 50;
+        box-shadow: var(--shadow-md);
       }
 
-      .main {
-        margin: 20px auto;
+      .app-shell.notes-collapsed .notes-panel {
+        width: var(--notes-collapsed-width);
       }
     }
   </style>
 </head>
 
 <body>
-  <div class="layout">
+  <div id="appShell" class="app-shell">
     <aside class="sidebar">
-      <div class="sidebar-title">RepoMind</div>
-      <div class="sidebar-subtitle">GitHub 项目学习工作台</div>
+      <div class="brand">
+        <div class="brand-logo">R</div>
+        <div>
+          <div class="brand-title">RepoMind</div>
+          <div class="brand-subtitle">GitHub 项目学习工作台</div>
+        </div>
+      </div>
 
       <button class="new-project-btn" onclick="clearCurrentProject()">+ 新项目</button>
 
+      <div class="side-section-title">历史项目</div>
       <div id="projectList" class="project-list">
         <div style="color:#aaa;font-size:14px;">正在加载历史项目...</div>
       </div>
     </aside>
 
     <main class="main">
-      <h1>RepoMind</h1>
-      <div class="subtitle">GitHub 开源项目理解与问答助手</div>
-
-      <div class="card">
-        <h2>1. 分析 GitHub 项目</h2>
-        <input id="repoUrl" placeholder="输入 GitHub URL，例如：https://github.com/BaseMax/SimpleFastPyAPI" />
-        <button id="analyzeBtn" onclick="analyzeRepo()">分析项目</button>
-        <div id="analyzeStatus" class="status"></div>
-      </div>
-
-      <div class="tabs">
-        <button id="reportTab" class="tab-btn active" onclick="setActivePanel('report')">
-          项目导读
-        </button>
-        <button id="chatTab" class="tab-btn" onclick="setActivePanel('chat')">
-          项目对话
-        </button>
-      </div>
-
-      <section id="reportPanel" class="panel">
-        <div class="card">
-          <h2>项目导读</h2>
-          <div id="reportOutput" class="markdown-body">分析完成后，这里会显示 AI 项目导读。</div>
+      <div class="main-inner">
+        <div class="topbar">
+          <div>
+            <h1 class="page-title">RepoMind</h1>
+            <div class="page-subtitle">面向 GitHub 开源项目的 AI 导读、代码问答与学习记录工作台</div>
+          </div>
+          <div id="currentProjectBadge" class="current-project-badge">未选择项目</div>
         </div>
-      </section>
 
-      <section id="chatPanel" class="panel hidden">
-        <div class="card chat-card">
-          <div class="chat-header">
-            <h2>2. 围绕项目对话</h2>
-            <div id="askStatus" class="status">分析项目后即可开始提问。</div>
+        <section class="card">
+          <h2 class="card-title">分析 GitHub 项目</h2>
+          <div class="repo-input-row">
+            <input id="repoUrl" placeholder="输入 GitHub URL，例如：https://github.com/pallets/flask" />
+            <button id="analyzeBtn" class="primary-btn" onclick="analyzeRepo()">分析项目</button>
           </div>
+          <div id="analyzeStatus" class="status"></div>
+        </section>
 
-          <div id="chatWindow" class="chat-window">
-            <div class="empty-chat">这里会显示你和 RepoMind 的连续对话。</div>
-          </div>
+        <div class="main-tabs">
+          <button id="reportTab" class="main-tab active" onclick="setActivePanel('report')">项目导读</button>
+          <button id="chatTab" class="main-tab" onclick="setActivePanel('chat')">项目对话</button>
+        </div>
 
-          <div class="chat-input-area">
-            <div class="chat-input-row">
-              <textarea id="question" rows="2" placeholder="例如：这个项目的 API 路由是怎么设计的？"></textarea>
-              <button id="askBtn" onclick="askQuestion()">发送</button>
+        <section id="reportPanel" class="panel">
+          <div class="card">
+            <h2 class="card-title">项目导读</h2>
+            <div id="reportOutput" class="report-box markdown-body">
+              分析完成后，这里会显示 AI 项目导读。
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+
+        <section id="chatPanel" class="panel hidden">
+          <div class="card chat-card">
+            <div class="chat-header">
+              <div>
+                <div class="chat-title">项目对话</div>
+                <div id="askStatus" class="chat-status">分析项目后即可开始提问。</div>
+              </div>
+            </div>
+
+            <div id="chatWindow" class="chat-window">
+              <div class="empty-chat">这里会显示你和 RepoMind 的连续对话。</div>
+            </div>
+
+            <div class="chat-input-area">
+              <div class="chat-input-row">
+                <textarea id="question" rows="2" placeholder="例如：这个项目的 API 路由是怎么设计的？"></textarea>
+                <button id="askBtn" class="primary-btn" onclick="askQuestion()">发送</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
     </main>
+
+    <aside id="notesPanel" class="notes-panel">
+      <div class="notes-full">
+        <div class="notes-header">
+          <div>
+            <div class="notes-title">学习工作台</div>
+            <div id="draftStatus" class="notes-subtitle">选择项目后可编辑草稿</div>
+          </div>
+          <button class="notes-collapse-btn" onclick="toggleNotesPanel()" title="收起">›</button>
+        </div>
+
+        <div class="note-tabs">
+          <button id="draftEditTab" class="note-tab active" onclick="setDraftTab('edit')">草稿</button>
+          <button id="draftPreviewTab" class="note-tab" onclick="setDraftTab('preview')">预览</button>
+          <button id="draftNotesTab" class="note-tab" onclick="setDraftTab('notes')">记录</button>
+        </div>
+
+        <div class="notes-body">
+          <section id="draftEditSection" class="notes-section">
+            <label class="field-label">标题</label>
+            <input id="draftTitle" placeholder="学习草稿" />
+
+            <label class="field-label">Markdown 草稿</label>
+            <textarea id="draftContent" placeholder="# 今天理解了什么&#10;&#10;- 项目入口是...&#10;- Agent 流程是..."></textarea>
+          </section>
+
+          <section id="draftPreviewSection" class="notes-section hidden">
+            <label class="field-label">Markdown 预览</label>
+            <div id="draftPreview" class="preview-box markdown-body">暂无内容。</div>
+          </section>
+
+          <section id="draftNotesSection" class="notes-section hidden">
+            <div class="learning-toolbar">
+              <button class="secondary-btn" onclick="createLearningNote()">新建笔记</button>
+              <button id="generateLearningBtn" class="primary-btn" onclick="generateLearningNote()">AI 整理</button>
+            </div>
+            <div id="learningNotesBox"></div>
+          </section>
+        </div>
+
+        <div class="notes-footer">
+          <button class="secondary-btn" onclick="setDraftTab('preview')">预览</button>
+          <button class="primary-btn" onclick="saveDraft()">保存草稿</button>
+        </div>
+      </div>
+
+      <div class="notes-collapsed-content" onclick="toggleNotesPanel()">学习工作台</div>
+    </aside>
   </div>
 
   <script>
     let currentProjectId = null;
+    let currentDraft = null;
 
     async function readResponseJson(response) {
       const text = await response.text();
-
       try {
         return JSON.parse(text);
       } catch (error) {
@@ -433,6 +914,26 @@
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
+    }
+
+    function setNotesCollapsed(collapsed) {
+      const shell = document.getElementById("appShell");
+      if (collapsed) {
+        shell.classList.add("notes-collapsed");
+      } else {
+        shell.classList.remove("notes-collapsed");
+      }
+      localStorage.setItem("repomind:notesCollapsed", collapsed ? "1" : "0");
+    }
+
+    function toggleNotesPanel() {
+      const shell = document.getElementById("appShell");
+      setNotesCollapsed(!shell.classList.contains("notes-collapsed"));
+    }
+
+    function restoreNotesPanel() {
+      const collapsed = localStorage.getItem("repomind:notesCollapsed") === "1";
+      setNotesCollapsed(collapsed);
     }
 
     function setActivePanel(panelName) {
@@ -455,9 +956,48 @@
       }
     }
 
+    function setDraftTab(tabName) {
+      const editTab = document.getElementById("draftEditTab");
+      const previewTab = document.getElementById("draftPreviewTab");
+      const notesTab = document.getElementById("draftNotesTab");
+
+      const editSection = document.getElementById("draftEditSection");
+      const previewSection = document.getElementById("draftPreviewSection");
+      const notesSection = document.getElementById("draftNotesSection");
+
+      editTab.classList.remove("active");
+      previewTab.classList.remove("active");
+      notesTab.classList.remove("active");
+
+      editSection.classList.add("hidden");
+      previewSection.classList.add("hidden");
+      notesSection.classList.add("hidden");
+
+      if (tabName === "edit") {
+        editTab.classList.add("active");
+        editSection.classList.remove("hidden");
+      }
+
+      if (tabName === "preview") {
+        refreshDraftPreview();
+        previewTab.classList.add("active");
+        previewSection.classList.remove("hidden");
+      }
+
+      if (tabName === "notes") {
+        loadLearningNotes();
+        notesTab.classList.add("active");
+        notesSection.classList.remove("hidden");
+      }
+    }
+
     function scrollChatToBottom() {
       const chatWindow = document.getElementById("chatWindow");
       chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    function updateCurrentProjectBadge(name) {
+      document.getElementById("currentProjectBadge").innerText = name ? `当前项目：${name}` : "未选择项目";
     }
 
     function renderChatHistory(chatHistory) {
@@ -468,20 +1008,25 @@
         return;
       }
 
-      const html = chatHistory.map((turn) => {
+      chatWindow.innerHTML = chatHistory.map((turn) => {
+        const messageId = turn.id || "";
         return `
           <div class="message user">
             <div class="bubble">${escapeHtml(turn.question || "")}</div>
           </div>
           <div class="message assistant">
-            <div class="bubble">
+            <div class="bubble assistant-bubble">
               <div class="markdown-body">${renderMarkdown(turn.answer || "")}</div>
+              ${
+                messageId
+                  ? `<button class="bubble-delete-btn" onclick="deleteMessage(${messageId})" title="删除这条问答">🗑</button>`
+                  : ""
+              }
             </div>
           </div>
         `;
       }).join("");
 
-      chatWindow.innerHTML = html;
       scrollChatToBottom();
     }
 
@@ -510,22 +1055,22 @@
       try {
         const response = await fetch("/projects");
         const data = await readResponseJson(response);
-
         const projects = data.projects || [];
 
         if (projects.length === 0) {
-          projectList.innerHTML = `<div style="color:#aaa;font-size:14px;">暂无历史项目</div>`;
+          projectList.innerHTML = `<div style="color:#8b8d94;font-size:14px;padding:8px 4px;">暂无历史项目</div>`;
           return;
         }
 
         projectList.innerHTML = projects.map((project) => `
           <div class="project-item ${project.id === currentProjectId ? "active" : ""}" onclick="loadProject(${project.id})">
+            <button class="project-delete-btn" onclick="deleteProject(event, ${project.id})" title="删除项目">×</button>
             <div class="project-name">${escapeHtml(project.project_name || "")}</div>
             <div class="project-url">${escapeHtml(project.repo_url || "")}</div>
           </div>
         `).join("");
       } catch (error) {
-        projectList.innerHTML = `<div style="color:#aaa;font-size:14px;">历史项目加载失败</div>`;
+        projectList.innerHTML = `<div style="color:#8b8d94;font-size:14px;">历史项目加载失败</div>`;
       }
     }
 
@@ -545,19 +1090,17 @@
         const messagesResponse = await fetch(`/projects/${projectId}/messages`);
         const messagesData = await readResponseJson(messagesResponse);
 
-        if (!messagesResponse.ok) {
-          throw new Error(messagesData.detail || "对话加载失败");
-        }
-
         currentProjectId = projectId;
-
         document.getElementById("repoUrl").value = project.repo_url || "";
-
         analyzeStatus.innerText = `已加载历史项目：${project.project_name}`;
         askStatus.innerText = "已恢复历史项目，可以继续提问。";
+        updateCurrentProjectBadge(project.project_name);
 
         reportOutput.innerHTML = renderMarkdown(project.ai_report || "暂无项目导读。");
         renderChatHistory(messagesData.messages || []);
+
+        await loadDraft();
+        await loadLearningNotes();
 
         setActivePanel("report");
         loadProjects();
@@ -568,13 +1111,16 @@
 
     function clearCurrentProject() {
       currentProjectId = null;
+      currentDraft = null;
 
       document.getElementById("repoUrl").value = "";
       document.getElementById("analyzeStatus").innerText = "";
       document.getElementById("askStatus").innerText = "分析项目后即可开始提问。";
       document.getElementById("reportOutput").innerHTML = "分析完成后，这里会显示 AI 项目导读。";
       document.getElementById("question").value = "";
+      updateCurrentProjectBadge("");
 
+      resetDraftUI();
       renderChatHistory([]);
       setActivePanel("report");
       loadProjects();
@@ -602,9 +1148,7 @@
       try {
         const response = await fetch("/analyze", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ repo_url: repoUrl }),
         });
 
@@ -618,8 +1162,12 @@
 
         status.innerText = `分析完成：${data.project_name}`;
         askStatus.innerText = "可以开始围绕这个项目提问。";
+        updateCurrentProjectBadge(data.project_name);
         reportOutput.innerHTML = renderMarkdown(data.ai_report || "");
         renderChatHistory(data.chat_history || []);
+
+        await loadDraft();
+        await loadLearningNotes();
 
         setActivePanel("report");
         loadProjects();
@@ -639,7 +1187,6 @@
       const askStatus = document.getElementById("askStatus");
 
       if (!question) {
-        alert("请输入问题");
         return;
       }
 
@@ -651,15 +1198,11 @@
       addTemporaryUserMessage(question);
 
       try {
-        const askUrl = currentProjectId
-          ? `/projects/${currentProjectId}/ask`
-          : "/ask-v2";
+        const askUrl = currentProjectId ? `/projects/${currentProjectId}/ask` : "/ask-v2";
 
         const response = await fetch(askUrl, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ question }),
         });
 
@@ -679,21 +1222,288 @@
         loadProjects();
       } catch (error) {
         askStatus.innerText = `回答失败：${error.message}`;
-
         const loadingMessage = document.getElementById("loadingMessage");
         if (loadingMessage) {
-          loadingMessage.innerHTML = `
-            <div class="bubble">回答失败：${escapeHtml(error.message)}</div>
-          `;
+          loadingMessage.innerHTML = `<div class="bubble">回答失败：${escapeHtml(error.message)}</div>`;
         }
       } finally {
         askButton.disabled = false;
       }
     }
 
+    function setupEnterToSend() {
+      const questionInput = document.getElementById("question");
+      questionInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          askQuestion();
+        }
+      });
+    }
+
+    async function deleteProject(event, projectId) {
+      event.stopPropagation();
+
+      const ok = confirm("确定要删除这个项目吗？该项目的历史问答、草稿和学习记录也会被删除。");
+      if (!ok) return;
+
+      try {
+        const response = await fetch(`/projects/${projectId}`, { method: "DELETE" });
+        const data = await readResponseJson(response);
+
+        if (!response.ok) {
+          throw new Error(data.detail || "删除失败");
+        }
+
+        if (currentProjectId === projectId) {
+          clearCurrentProject();
+        }
+
+        await loadProjects();
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    async function deleteMessage(messageId) {
+      if (!currentProjectId) {
+        alert("请先选择项目");
+        return;
+      }
+
+      const ok = confirm("确定删除这条问答吗？");
+      if (!ok) return;
+
+      try {
+        const response = await fetch(`/projects/${currentProjectId}/messages/${messageId}`, {
+          method: "DELETE",
+        });
+
+        const data = await readResponseJson(response);
+
+        if (!response.ok) {
+          throw new Error(data.detail || "删除失败");
+        }
+
+        const messagesResponse = await fetch(`/projects/${currentProjectId}/messages`);
+        const messagesData = await readResponseJson(messagesResponse);
+        renderChatHistory(messagesData.messages || []);
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    function resetDraftUI() {
+      document.getElementById("draftTitle").value = "";
+      document.getElementById("draftContent").value = "";
+      document.getElementById("draftPreview").innerHTML = "暂无内容。";
+      document.getElementById("draftStatus").innerText = "选择项目后可编辑草稿";
+      document.getElementById("learningNotesBox").innerHTML = "";
+      setDraftTab("edit");
+    }
+
+    async function loadDraft() {
+      if (!currentProjectId) {
+        resetDraftUI();
+        return;
+      }
+
+      const draftStatus = document.getElementById("draftStatus");
+
+      try {
+        const response = await fetch(`/projects/${currentProjectId}/draft`);
+        const draft = await readResponseJson(response);
+
+        if (!response.ok) {
+          throw new Error(draft.detail || "草稿加载失败");
+        }
+
+        currentDraft = draft;
+        document.getElementById("draftTitle").value = draft.title || "学习草稿";
+        document.getElementById("draftContent").value = draft.content || "";
+        refreshDraftPreview();
+        draftStatus.innerText = "草稿已加载";
+        setDraftTab("edit");
+      } catch (error) {
+        draftStatus.innerText = `草稿加载失败：${error.message}`;
+      }
+    }
+
+    function refreshDraftPreview() {
+      const content = document.getElementById("draftContent").value;
+      const preview = document.getElementById("draftPreview");
+      preview.innerHTML = content.trim() ? renderMarkdown(content) : "暂无内容。";
+    }
+
+    async function saveDraft() {
+      if (!currentProjectId) {
+        alert("请先选择或分析一个项目");
+        return;
+      }
+
+      const draftStatus = document.getElementById("draftStatus");
+      const title = document.getElementById("draftTitle").value.trim() || "学习草稿";
+      const content = document.getElementById("draftContent").value;
+
+      try {
+        const response = await fetch(`/projects/${currentProjectId}/draft`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            content,
+            is_collapsed: false,
+          }),
+        });
+
+        const draft = await readResponseJson(response);
+
+        if (!response.ok) {
+          throw new Error(draft.detail || "草稿保存失败");
+        }
+
+        currentDraft = draft;
+        refreshDraftPreview();
+        draftStatus.innerText = "草稿已保存";
+      } catch (error) {
+        draftStatus.innerText = `草稿保存失败：${error.message}`;
+      }
+    }
+
+    async function loadLearningNotes() {
+      const box = document.getElementById("learningNotesBox");
+
+      if (!currentProjectId) {
+        box.innerHTML = `<div class="empty-state">选择项目后可以查看学习记录。</div>`;
+        return;
+      }
+
+      try {
+        const response = await fetch(`/projects/${currentProjectId}/learning-notes`);
+        const data = await readResponseJson(response);
+
+        if (!response.ok) {
+          throw new Error(data.detail || "学习记录加载失败");
+        }
+
+        const notes = data.learning_notes || [];
+
+        if (notes.length === 0) {
+          box.innerHTML = `<div class="empty-state">暂无学习记录。可以手动新建，或让 AI 基于草稿和问答生成。</div>`;
+          return;
+        }
+
+        box.innerHTML = notes.map((note) => `
+          <div class="learning-note-card">
+            <div class="learning-note-header">
+              <div class="learning-note-title">${escapeHtml(note.title || "项目学习记录")}</div>
+              <button class="small-icon-btn" onclick="deleteLearningNote(${note.id})" title="删除">🗑</button>
+            </div>
+            <div class="learning-note-content markdown-body">
+              ${renderMarkdown(note.content || "")}
+            </div>
+          </div>
+        `).join("");
+      } catch (error) {
+        box.innerHTML = `<div class="empty-state">学习记录加载失败：${escapeHtml(error.message)}</div>`;
+      }
+    }
+
+    async function createLearningNote() {
+      if (!currentProjectId) {
+        alert("请先选择或分析一个项目");
+        return;
+      }
+
+      try {
+        const response = await fetch(`/projects/${currentProjectId}/learning-notes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: "新的学习记录",
+            content: "# 新的学习记录\n\n",
+          }),
+        });
+
+        const note = await readResponseJson(response);
+
+        if (!response.ok) {
+          throw new Error(note.detail || "新建笔记失败");
+        }
+
+        await loadLearningNotes();
+        setDraftTab("notes");
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    async function deleteLearningNote(noteId) {
+      if (!currentProjectId) {
+        alert("请先选择项目");
+        return;
+      }
+
+      const ok = confirm("确定删除这条学习记录吗？");
+      if (!ok) return;
+
+      try {
+        const response = await fetch(`/projects/${currentProjectId}/learning-notes/${noteId}`, {
+          method: "DELETE",
+        });
+
+        const data = await readResponseJson(response);
+
+        if (!response.ok) {
+          throw new Error(data.detail || "删除失败");
+        }
+
+        await loadLearningNotes();
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    async function generateLearningNote() {
+      if (!currentProjectId) {
+        alert("请先选择或分析一个项目");
+        return;
+      }
+
+      await saveDraft();
+
+      const button = document.getElementById("generateLearningBtn");
+      const draftStatus = document.getElementById("draftStatus");
+
+      button.disabled = true;
+      draftStatus.innerText = "正在生成学习记录...";
+
+      try {
+        const response = await fetch(`/projects/${currentProjectId}/learning-notes/generate`, {
+          method: "POST",
+        });
+
+        const note = await readResponseJson(response);
+
+        if (!response.ok) {
+          throw new Error(note.detail || "学习记录生成失败");
+        }
+
+        draftStatus.innerText = "学习记录已生成";
+        await loadLearningNotes();
+        setDraftTab("notes");
+      } catch (error) {
+        draftStatus.innerText = `生成失败：${error.message}`;
+      } finally {
+        button.disabled = false;
+      }
+    }
+
     window.addEventListener("DOMContentLoaded", () => {
+      restoreNotesPanel();
       loadProjects();
       setActivePanel("report");
+      setupEnterToSend();
     });
   </script>
 </body>

@@ -527,6 +527,7 @@ def answer_node(state: RepoMindState) -> RepoMindState:
         **state,
         "answer": answer.strip(),
     }
+
 def build_repomind_graph(repo_path: str | Path):
     chroma_tool = make_chroma_search_tool(str(repo_path))
 
@@ -557,7 +558,7 @@ def build_repomind_graph(repo_path: str | Path):
 
     graph.add_conditional_edges(
         "agent",
-        tools_condition,
+        tools_condition, 
         {
             "tools": "tools",
             END: "direct_answer",
